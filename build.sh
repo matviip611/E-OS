@@ -9,7 +9,7 @@ if [ "$(id -u)" -ne 0 ]; then exec sudo -E bash "$0" "$@"; fi
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y live-build debootstrap squashfs-tools xorriso mtools dosfstools \
-  syslinux syslinux-common isolinux grub-pc-bin grub-efi-amd64-bin python3 python3-pil ca-certificates
+  syslinux syslinux-common syslinux-utils isolinux rsync cpio zstd grub-pc-bin grub-efi-amd64-bin python3 python3-pil ca-certificates
 
 # --- 1. розкласти ресурси з assets/ у дерево системи
 INC="config-tree/includes.chroot"
@@ -22,7 +22,7 @@ cp assets/wallpaper.jpg        "$INC/usr/share/sddm/themes/eos/background.jpg"
 cp assets/logo-white.png       "$INC/usr/share/sddm/themes/eos/logo.png"
 cp assets/logo-white.png       "$INC/usr/share/pixmaps/eos-logo.png"
 cp assets/menu-round.png       "$INC/usr/share/pixmaps/eos-menu.png"
-cp assets/logo-green.png       "$INC/usr/share/icons/hicolor/256x256/apps/eos.png"
+cp assets/logo-round-256.png   "$INC/usr/share/icons/hicolor/256x256/apps/eos.png"
 cp assets/plymouth-logo.png    "$INC/usr/share/plymouth/themes/eos/logo.png"
 cp assets/background-music.mp3 "$INC/usr/share/E-OS/background-music.mp3"
 
@@ -56,7 +56,7 @@ src=Image.open('../assets/wallpaper.jpg').convert('RGB')
 for f in glob.glob('config/bootloaders/**/splash.png',recursive=True):
     w,h=Image.open(f).size; src.resize((w,h)).save(f)
 PY
-  grep -rlE "Debian" config/bootloaders 2>/dev/null | xargs -r sed -i 's/Debian GNU\/Linux/E-OS (PME)/g; s/Debian/E-OS/g' || true
+  find config/bootloaders -type f \( -name '*.cfg' -o -name '*.txt' -o -name '*.in' \) -print0 2>/dev/null | xargs -0 -r sed -i 's/Debian GNU\/Linux/E-OS (PME)/g; s/Debian/E-OS/g' || true
 fi
 
 # --- 4. збірка

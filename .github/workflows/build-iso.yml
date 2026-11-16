@@ -3,9 +3,12 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - name: Free disk space
@@ -15,7 +18,16 @@ jobs:
           df -h /
       - name: Build E-OS (amd64) in debian:bookworm
         run: |
-          docker run --rm --privileged -v "$PWD":/work -w /work debian:bookworm bash ./build.sh
+          docker run --rm --privileged -v "$PWD":/work -w /work debian:bookworm bash ./build.sh 2>&1 | tee build.log
+      - name: Publish log to branch build-logs
+        if: always()
+        run: |
+          mkdir -p /tmp/l
+          tail -n 400 build.log > /tmp/l/build-tail.log || true
+          grep -nE "^E:|Error|error:|rror |failed|Failed|No such|cannot|Unable|not found" build.log | tail -120 > /tmp/l/errors.txt || true
+          cd /tmp/l && git init -q && git checkout -q -b build-logs && git add . \
+            && git -c user.name=ci -c user.email=ci@local commit -qm "build log" \
+            && git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build-logs
       - uses: actions/upload-artifact@v4
         with:
           name: E-OS-amd64

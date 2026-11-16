@@ -1,0 +1,24 @@
+#!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
+apt-get update || true
+for p in firmware-amd-graphics firmware-iwlwifi firmware-realtek firmware-atheros \
+         mesa-vulkan-drivers libgl1-mesa-dri breeze-gtk-theme breeze-icon-theme kde-config-sddm \
+         kinfocenter ark gwenview kate kdeconnect kio-extras xdg-desktop-portal-kde \
+         plasma-discover packagekit gdebi wine wine64 libwine fonts-wine lxc \
+         firefox-esr firefox-esr-l10n-uk fonts-noto fonts-noto-color-emoji fonts-liberation \
+         xdg-utils xdg-user-dirs numix-icon-theme numix-icon-theme-circle \
+         calamares calamares-settings-debian; do
+  apt-get install -y --no-install-recommends "$p" || echo "E-OS: пакет $p пропущено"
+done
+# круглі іконки: якщо пакета Numix Circle немає — беремо з GitHub
+if [ ! -d /usr/share/icons/Numix-Circle ]; then
+  tmp=$(mktemp -d)
+  for r in numix-icon-theme numix-icon-theme-circle; do
+    curl -fsSL "https://github.com/numixproject/$r/archive/refs/heads/master.tar.gz" -o "$tmp/$r.tgz" \
+     && tar -xzf "$tmp/$r.tgz" -C "$tmp" || true
+  done
+  [ -d "$tmp/numix-icon-theme-master/Numix" ] && cp -a "$tmp/numix-icon-theme-master/Numix" /usr/share/icons/Numix
+  [ -d "$tmp/numix-icon-theme-circle-master/Numix-Circle" ] && cp -a "$tmp/numix-icon-theme-circle-master/Numix-Circle" /usr/share/icons/
+  gtk-update-icon-cache -f /usr/share/icons/Numix-Circle 2>/dev/null || true
+fi
+exit 0

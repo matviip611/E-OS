@@ -4,4 +4,4 @@ ColorScheme=BreezeDark
 LookAndFeelPackage=org.kde.breezedark.desktop
 widgetStyle=Breeze
 [Icons]
-Theme=breeze-dark
+Theme=Numix-Circle
