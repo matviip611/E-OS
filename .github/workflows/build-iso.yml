@@ -8,31 +8,80 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 180
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
           df -h /
+
       - name: Build E-OS (amd64) in debian:bookworm
         run: |
+          mkdir -p /tmp/l
           docker run --rm --privileged -v "$PWD":/work -w /work debian:bookworm bash ./build.sh 2>&1 | tee build.log
-      - name: Publish log to branch build-logs
+          ls -lh E-OS-amd64.iso | tee /tmp/l/iso-size.txt
+
+      - name: Verify ISO contents
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y squashfs-tools xorriso >/dev/null
+          xorriso -osirrox on -indev E-OS-amd64.iso -extract /live/filesystem.squashfs /tmp/fs.squashfs >/dev/null 2>&1
+          unsquashfs -l /tmp/fs.squashfs > /tmp/fs.list
+          {
+            echo "squashfs entries: $(wc -l < /tmp/fs.list)"
+            for pat in usr/local/bin/eos-music usr/local/bin/eos-session-setup usr/share/sddm/themes/eos/Main.qml \
+                       usr/share/plymouth/themes/eos/eos.script usr/share/icons/Numix-Circle/index.theme \
+                       usr/share/pixmaps/eos-menu.png usr/bin/wine usr/bin/kdeconnect-app usr/bin/gdebi-gtk \
+                       usr/bin/waydroid usr/bin/calamares usr/bin/firefox-esr usr/bin/plasmashell usr/bin/sddm \
+                       boot/initrd.img boot/vmlinuz etc/os-release; do
+              if grep -q "squashfs-root/$pat" /tmp/fs.list; then echo "OK   $pat"; else echo "MISS $pat"; fi
+            done
+          } | tee /tmp/l/verify.txt
+          unsquashfs -cat /tmp/fs.squashfs etc/os-release 2>/dev/null | tee -a /tmp/l/verify.txt
+
+      - name: Boot test in QEMU (screenshots)
+        continue-on-error: true
+        timeout-minutes: 25
+        run: |
+          sudo apt-get install -y qemu-system-x86 socat imagemagick >/dev/null
+          ACCEL=tcg; if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; ACCEL=kvm; fi
+          echo "qemu accel: $ACCEL" | tee /tmp/l/qemu.txt
+          qemu-system-x86_64 -accel $ACCEL -m 4096 -smp 2 -cdrom E-OS-amd64.iso -boot d -vga std \
+            -display none -monitor unix:/tmp/mon,server,nowait -serial file:/tmp/l/serial.txt &
+          sleep 20
+          shot() { echo "screendump /tmp/$1.ppm" | socat - UNIX-CONNECT:/tmp/mon >/dev/null; sleep 1; convert /tmp/$1.ppm /tmp/l/$1.png 2>/dev/null || true; }
+          shot boot-menu
+          echo "sendkey ret" | socat - UNIX-CONNECT:/tmp/mon >/dev/null
+          for t in 60 120 180 240 300; do sleep 60; shot "t$t"; done
+          echo "quit" | socat - UNIX-CONNECT:/tmp/mon >/dev/null || true
+
+      - name: Publish ISO as GitHub Release (split into <2GB parts)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          SIZE=$(stat -c %s E-OS-amd64.iso)
+          mkdir -p rel; cp E-OS-amd64.iso.sha256 rel/
+          if [ "$SIZE" -gt 2000000000 ]; then
+            split -b 1900M -d E-OS-amd64.iso rel/E-OS-amd64.iso.part-
+            echo "cat E-OS-amd64.iso.part-* > E-OS-amd64.iso" > rel/JOIN.txt
+          else
+            cp E-OS-amd64.iso rel/
+          fi
+          gh release create "$TAG" rel/* --title "E-OS by PME $TAG" --notes "amd64 ISO. Якщо файл розбитий на частини: див. JOIN.txt (cat частини > E-OS-amd64.iso), потім перевірте sha256."
+
+      - name: Publish logs to branch build-logs
         if: always()
         run: |
           mkdir -p /tmp/l
           tail -n 400 build.log > /tmp/l/build-tail.log || true
-          grep -nE "^E:|Error|error:|rror |failed|Failed|No such|cannot|Unable|not found" build.log | tail -120 > /tmp/l/errors.txt || true
+          grep -nE "^E:|rror|Failed|No such|cannot|Unable|not found|E-OS:" build.log | tail -200 > /tmp/l/errors.txt || true
+          grep -n "E-OS:" build.log > /tmp/l/skipped-packages.txt || true
+          gzip -c build.log > /tmp/l/build.log.gz || true
           cd /tmp/l && git init -q && git checkout -q -b build-logs && git add . \
             && git -c user.name=ci -c user.email=ci@local commit -qm "build log" \
             && git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build-logs
-      - uses: actions/upload-artifact@v4
-        with:
-          name: E-OS-amd64
-          path: |
-            E-OS-amd64.iso
-            E-OS-amd64.iso.sha256
-          compression-level: 0
-          retention-days: 14
