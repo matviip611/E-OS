@@ -1,0 +1,7 @@
+#!/bin/bash
+# Waydroid для APK (лише amd64). Не критично, якщо репозиторій недоступний.
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl gnupg ca-certificates || true
+curl -fsSL https://repo.waydro.id/waydroid.gpg -o /usr/share/keyrings/waydroid.gpg \
+ && echo "deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ bookworm main" > /etc/apt/sources.list.d/waydroid.list \
+ && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y waydroid || true
+exit 0

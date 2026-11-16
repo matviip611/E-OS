@@ -1,0 +1,10 @@
+[SddmGreeterTheme]
+Name=E-OS (PME)
+Description=E-OS login screen by PME
+Author=PME
+Version=1.0
+Type=sddm-theme
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=eos
+Theme-API=2.0

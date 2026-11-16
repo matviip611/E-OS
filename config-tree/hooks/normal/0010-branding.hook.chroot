@@ -1,0 +1,31 @@
+#!/bin/bash
+# Брендинг E-OS / PME
+cat > /etc/os-release <<'OS'
+PRETTY_NAME="E-OS (PME)"
+NAME="E-OS"
+VERSION="1.0"
+VERSION_ID="1.0"
+ID=eos
+ID_LIKE=debian
+HOME_URL="https://github.com/matviip611/E-OS"
+VARIANT="PME edition"
+VENDOR_NAME="PME"
+OS
+echo "E-OS by PME \n \l" > /etc/issue
+echo "E-OS by PME" > /etc/issue.net
+echo "e-os" > /etc/hostname
+cat > /etc/lsb-release <<'LSB'
+DISTRIB_ID=E-OS
+DISTRIB_RELEASE=1.0
+DISTRIB_DESCRIPTION="E-OS (PME)"
+LSB
+# мова і час
+sed -i 's/^# *\(uk_UA.UTF-8\)/\1/; s/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen
+locale-gen || true
+echo "LANG=uk_UA.UTF-8" > /etc/default/locale
+ln -sf /usr/share/zoneinfo/Europe/Kyiv /etc/localtime || true
+# Plymouth: чорний екран, біле лого, що блимає
+plymouth-set-default-theme -R eos || true
+# значок і назва програм
+update-icon-caches /usr/share/icons/hicolor 2>/dev/null || true
+exit 0

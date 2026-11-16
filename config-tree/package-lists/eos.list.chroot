@@ -1,0 +1,21 @@
+# ядро і live
+linux-image-amd64 live-boot live-config live-config-systemd systemd-sysv
+firmware-linux-free firmware-misc-nonfree firmware-amd-graphics firmware-iwlwifi firmware-realtek firmware-atheros amd64-microcode intel-microcode
+# графіка
+xorg xserver-xorg-video-all xserver-xorg-input-libinput mesa-vulkan-drivers libgl1-mesa-dri
+# KDE Plasma + SDDM
+plasma-desktop kwin-x11 sddm plasma-nm plasma-pa plasma-discover plasma-discover-backend-packagekit packagekit powerdevil kscreen
+breeze breeze-gtk-theme kde-config-sddm systemsettings kinfocenter
+dolphin konsole ark gwenview kate kdeconnect
+qml-module-qtquick2 qml-module-qtquick-controls2 qml-module-qtquick-layouts qml-module-qtgraphicaleffects qml-module-qtquick-controls
+# звук і мережа
+pipewire pipewire-pulse wireplumber pulseaudio-utils network-manager
+# фонова музика, .deb, .exe, APK
+mpv python3 python3-pil gdebi wine wine64 libwine fonts-wine
+lxc dbus-x11 dbus-user-session
+# завантаження
+plymouth plymouth-themes
+# програми і шрифти
+firefox-esr firefox-esr-l10n-uk fonts-noto fonts-noto-color-emoji fonts-liberation
+locales sudo xdg-utils xdg-user-dirs
+calamares calamares-settings-debian

@@ -1,0 +1,16 @@
+#!/bin/bash
+# Автоналаштування графіки: RAM > 4 ГБ — повні ефекти, інакше легкий режим
+KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+if [ "$KB" -gt 4000000 ]; then
+  kwriteconfig5 --file kwinrc --group Compositing --key Enabled true
+  kwriteconfig5 --file kwinrc --group Plugins --key blurEnabled true
+  kwriteconfig5 --file kwinrc --group Plugins --key contrastEnabled true
+  kwriteconfig5 --file kdeglobals --group KDE --key AnimationDurationFactor 1
+else
+  kwriteconfig5 --file kwinrc --group Plugins --key blurEnabled false
+  kwriteconfig5 --file kwinrc --group Plugins --key contrastEnabled false
+  kwriteconfig5 --file kwinrc --group Plugins --key slidingpopupsEnabled false
+  kwriteconfig5 --file kwinrc --group Compositing --key LatencyPolicy Low
+  kwriteconfig5 --file kdeglobals --group KDE --key AnimationDurationFactor 0
+fi
+dbus-send --session --dest=org.kde.KWin /KWin org.kde.KWin.reconfigure >/dev/null 2>&1 || true

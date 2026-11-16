@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=E-OS setup
+Exec=/usr/local/bin/eos-session-setup
+X-KDE-autostart-after=panel
+NoDisplay=true

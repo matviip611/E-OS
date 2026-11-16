@@ -1,0 +1,14 @@
+#!/bin/bash
+systemctl enable sddm NetworkManager || true
+systemctl set-default graphical.target || true
+ln -sf /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service || true
+# .deb відкривається через gdebi, .exe через wine
+mkdir -p /etc/skel/.config
+cat > /etc/skel/.config/mimeapps.list <<'MIME'
+[Default Applications]
+application/vnd.debian.binary-package=gdebi.desktop
+application/x-deb=gdebi.desktop
+application/x-ms-dos-executable=wine.desktop
+application/x-msdownload=wine.desktop
+MIME
+exit 0

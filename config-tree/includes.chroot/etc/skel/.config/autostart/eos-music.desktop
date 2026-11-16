@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=E-OS music
+Exec=/usr/local/bin/eos-music
+X-KDE-autostart-after=panel
+NoDisplay=true

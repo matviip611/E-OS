@@ -1,0 +1,6 @@
+#!/bin/bash
+# 32-бітні .exe: wine32
+dpkg --add-architecture i386 || true
+apt-get update || true
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wine32:i386 || true
+exit 0

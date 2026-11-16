@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=E-OS accent
+Exec=/usr/local/bin/eos-accent
+X-KDE-autostart-after=panel
+NoDisplay=true

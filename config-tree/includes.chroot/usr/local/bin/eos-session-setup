@@ -1,0 +1,35 @@
+#!/bin/bash
+# Перший вхід: шпалери + нижня панель по центру (стиль ChromeOS)
+FLAG="$HOME/.config/eos-session-setup.done"
+[ -f "$FLAG" ] && exit 0
+JS='
+var old = panels(); for (var i = 0; i < old.length; i++) { old[i].remove(); }
+var p = new Panel();
+p.location = "bottom";
+p.height = 52;
+p.alignment = "center";
+p.minimumLength = 420;
+p.maximumLength = 760;
+var menu = p.addWidget("org.kde.plasma.kickoff");
+menu.currentConfigGroup = ["General"];
+menu.writeConfig("icon", "/usr/share/pixmaps/eos-menu.png");
+p.addWidget("org.kde.plasma.icontasks");
+p.addWidget("org.kde.plasma.systemtray");
+p.addWidget("org.kde.plasma.digitalclock");
+var ds = desktops();
+for (var j = 0; j < ds.length; j++) {
+  ds[j].wallpaperPlugin = "org.kde.image";
+  ds[j].currentConfigGroup = ["Wallpaper", "org.kde.image", "General"];
+  ds[j].writeConfig("Image", "file:///usr/share/wallpapers/E-OS/contents/images/1920x1080.jpg");
+}
+'
+for i in $(seq 1 40); do
+  if dbus-send --session --dest=org.kde.plasmashell --print-reply /PlasmaShell \
+      org.kde.PlasmaShell.evaluateScript string:"$JS" >/dev/null 2>&1; then
+    mkdir -p "$(dirname "$FLAG")"; touch "$FLAG"
+    /usr/local/bin/eos-accent /usr/share/wallpapers/E-OS/contents/images/1920x1080.jpg
+    exit 0
+  fi
+  sleep 1
+done
+exit 1
