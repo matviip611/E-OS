@@ -94,8 +94,7 @@ jobs:
           run_vm nosplash ""
           ls -la /tmp/l
 
-      - name: Fallback - publish ISO as GitHub Release (split) ONLY if artifact upload failed
-        if: steps.upload_iso.outcome == 'failure'
+      - name: Publish full ISO as GitHub Release (single file; split only if > 2 GiB)
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +102,7 @@ jobs:
           TAG="build-${{ github.run_number }}"
           SIZE=$(stat -c %s E-OS-amd64.iso)
           mkdir -p rel; cp E-OS-amd64.iso.sha256 rel/
-          if [ "$SIZE" -gt 2000000000 ]; then
+          if [ "$SIZE" -gt 2147000000 ]; then
             split -b 1900M -d E-OS-amd64.iso rel/E-OS-amd64.iso.part-
             echo "cat E-OS-amd64.iso.part-* > E-OS-amd64.iso" > rel/JOIN.txt
           else
