@@ -55,21 +55,44 @@ jobs:
           } | tee /tmp/l/verify.txt
           unsquashfs -cat /tmp/fs.squashfs etc/os-release 2>/dev/null | tee -a /tmp/l/verify.txt
 
-      - name: Boot test in QEMU (screenshots)
+      - name: Boot test in QEMU (screenshots + serial diagnostics)
         continue-on-error: true
-        timeout-minutes: 25
+        timeout-minutes: 30
         run: |
           sudo apt-get install -y qemu-system-x86 socat imagemagick >/dev/null
+          mkdir -p /tmp/l
           ACCEL=tcg; if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; ACCEL=kvm; fi
           echo "qemu accel: $ACCEL" | tee /tmp/l/qemu.txt
+          xorriso -osirrox on -indev E-OS-amd64.iso -extract /live/vmlinuz /tmp/vmlinuz -extract /live/initrd.img /tmp/initrd.img >/dev/null 2>&1
+          chmod a+r /tmp/vmlinuz /tmp/initrd.img
+
+          shot() { echo "screendump /tmp/$2.ppm" | socat - UNIX-CONNECT:/tmp/mon-$1 >/dev/null; sleep 1; convert /tmp/$2.ppm /tmp/l/$2.png 2>/dev/null || true; }
+
+          # A) меню завантаження з самого ISO
           qemu-system-x86_64 -accel $ACCEL -m 4096 -smp 2 -cdrom E-OS-amd64.iso -boot d -vga std \
-            -display none -monitor unix:/tmp/mon,server,nowait -serial file:/tmp/l/serial.txt &
-          sleep 20
-          shot() { echo "screendump /tmp/$1.ppm" | socat - UNIX-CONNECT:/tmp/mon >/dev/null; sleep 1; convert /tmp/$1.ppm /tmp/l/$1.png 2>/dev/null || true; }
-          shot boot-menu
-          echo "sendkey ret" | socat - UNIX-CONNECT:/tmp/mon >/dev/null
-          for t in 60 120 180 240 300; do sleep 60; shot "t$t"; done
-          echo "quit" | socat - UNIX-CONNECT:/tmp/mon >/dev/null || true
+            -display none -monitor unix:/tmp/mon-menu,server,nowait &
+          sleep 20; shot menu boot-menu
+          echo "quit" | socat - UNIX-CONNECT:/tmp/mon-menu >/dev/null || true
+          sleep 3
+
+          # B/C) пряме завантаження ядра з послідовним портом: з splash і без splash
+          run_vm() {
+            NAME=$1; EXTRA=$2
+            qemu-system-x86_64 -accel $ACCEL -m 4096 -smp 2 -cdrom E-OS-amd64.iso \
+              -kernel /tmp/vmlinuz -initrd /tmp/initrd.img \
+              -append "boot=live components $EXTRA locales=uk_UA.UTF-8 keyboard-layouts=us,ua timezone=Europe/Kyiv username=eos hostname=e-os console=ttyS0,115200 eos.diag" \
+              -vga std -display none -monitor unix:/tmp/mon-$NAME,server,nowait -serial file:/tmp/l/serial-$NAME.txt &
+            sleep 40; shot $NAME $NAME-t40
+            sleep 60; shot $NAME $NAME-t100
+            sleep 60; shot $NAME $NAME-t160
+            sleep 60; shot $NAME $NAME-t220
+            sleep 60; shot $NAME $NAME-t280
+            echo "quit" | socat - UNIX-CONNECT:/tmp/mon-$NAME >/dev/null || true
+            sleep 3
+          }
+          run_vm splash "quiet splash"
+          run_vm nosplash ""
+          ls -la /tmp/l
 
       - name: Fallback - publish ISO as GitHub Release (split) ONLY if artifact upload failed
         if: steps.upload_iso.outcome == 'failure'

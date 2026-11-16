@@ -1,5 +1,5 @@
 #!/bin/bash
-systemctl enable sddm NetworkManager || true
+systemctl enable sddm NetworkManager eos-diag.service || true
 systemctl set-default graphical.target || true
 ln -sf /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service || true
 # .deb відкривається через gdebi, .exe через wine

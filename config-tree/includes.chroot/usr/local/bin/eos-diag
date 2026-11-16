@@ -1,0 +1,19 @@
+#!/bin/bash
+# Діагностика для CI: вивід у послідовний порт (тільки з параметром ядра eos.diag)
+exec >/dev/ttyS0 2>&1
+for T in 100 100; do
+  sleep "$T"
+  echo "=== EOS-DIAG BEGIN uptime=$(cut -d' ' -f1 /proc/uptime) ==="
+  echo "--- failed units";   systemctl --failed --no-pager
+  echo "--- sddm status";    systemctl status sddm --no-pager -l | tail -40
+  echo "--- sessions";       loginctl list-sessions --no-pager
+  echo "--- processes";      ps -eo pid,user,etime,pcpu,pmem,comm | grep -Ei 'sddm|Xorg|kwin|plasma|startplasma|ksplash|plymouth|kded|eos-' 
+  echo "--- journal warnings+"; journalctl -b --no-pager -p warning | tail -120
+  echo "--- journal sddm";   journalctl -b -u sddm --no-pager | tail -60
+  echo "--- sddm.conf";      cat /etc/sddm.conf 2>&1
+  echo "--- xorg-session.log"; tail -80 /home/eos/.local/share/sddm/xorg-session.log 2>&1
+  echo "--- xsession-errors";  tail -80 /home/eos/.xsession-errors 2>&1
+  echo "--- Xorg.0.log (errors)"; grep -E '\(EE\)|\(WW\)' /var/log/Xorg.0.log 2>&1 | tail -30
+  echo "--- coredumps";      coredumpctl list --no-pager 2>&1 | tail -10
+  echo "=== EOS-DIAG END ==="
+done
