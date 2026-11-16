@@ -24,6 +24,19 @@ jobs:
           docker run --rm --privileged -v "$PWD":/work -w /work debian:bookworm bash ./build.sh 2>&1 | tee build.log
           ls -lh E-OS-amd64.iso | tee /tmp/l/iso-size.txt
 
+      - name: Upload full ISO as artifact (single file, not split)
+        id: upload_iso
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: E-OS-amd64-iso
+          path: |
+            E-OS-amd64.iso
+            E-OS-amd64.iso.sha256
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Verify ISO contents
         continue-on-error: true
         run: |
@@ -58,7 +71,8 @@ jobs:
           for t in 60 120 180 240 300; do sleep 60; shot "t$t"; done
           echo "quit" | socat - UNIX-CONNECT:/tmp/mon >/dev/null || true
 
-      - name: Publish ISO as GitHub Release (split into <2GB parts)
+      - name: Fallback - publish ISO as GitHub Release (split) ONLY if artifact upload failed
+        if: steps.upload_iso.outcome == 'failure'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,3 +99,12 @@ jobs:
           cd /tmp/l && git init -q && git checkout -q -b build-logs && git add . \
             && git -c user.name=ci -c user.email=ci@local commit -qm "build log" \
             && git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build-logs
+
+      - name: Upload boot screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: E-OS-logs
+          path: /tmp/l/
+          retention-days: 7
+          if-no-files-found: ignore
