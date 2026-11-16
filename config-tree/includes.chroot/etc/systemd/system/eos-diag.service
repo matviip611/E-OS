@@ -1,0 +1,11 @@
+[Unit]
+Description=E-OS CI diagnostics (only with eos.diag on kernel cmdline)
+ConditionKernelCommandLine=eos.diag
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/eos-diag
+
+[Install]
+WantedBy=multi-user.target
