@@ -1,0 +1,104 @@
+name: debug-boot
+on:
+  workflow_dispatch:
+  push:
+    branches: [debug]
+permissions:
+  contents: write
+jobs:
+  debug:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - name: Download latest released ISO
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download --repo "${{ github.repository }}" --pattern 'E-OS-amd64.iso' --dir . 
+          ls -lh E-OS-amd64.iso
+
+      - name: Boot in QEMU, log in over serial, collect diagnostics
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y qemu-system-x86 socat imagemagick xorriso >/dev/null
+          mkdir -p /tmp/l
+          sudo chmod a+rw /dev/kvm 2>/dev/null || true
+          ACCEL=tcg; [ -e /dev/kvm ] && ACCEL=kvm
+          echo "accel: $ACCEL" > /tmp/l/qemu.txt
+          xorriso -osirrox on -indev E-OS-amd64.iso -extract /live/vmlinuz /tmp/vmlinuz -extract /live/initrd.img /tmp/initrd.img >/dev/null 2>&1
+          chmod a+r /tmp/vmlinuz /tmp/initrd.img
+          qemu-system-x86_64 -accel $ACCEL -m 4096 -smp 2 -cdrom E-OS-amd64.iso \
+            -kernel /tmp/vmlinuz -initrd /tmp/initrd.img \
+            -append "boot=live components quiet splash locales=uk_UA.UTF-8 keyboard-layouts=us,ua timezone=Europe/Kyiv username=eos hostname=e-os console=ttyS0,115200" \
+            -vga std -display none \
+            -monitor unix:/tmp/mon,server,nowait \
+            -serial tcp:127.0.0.1:4555,server,nowait &
+          cat > /tmp/drive.py <<'PY'
+          import socket, time, re
+          def conn():
+              for _ in range(60):
+                  try: return socket.create_connection(("127.0.0.1", 4555))
+                  except OSError: time.sleep(1)
+              raise SystemExit("no serial")
+          s = conn(); s.settimeout(1)
+          buf = b""; log = open("/tmp/l/serial-interactive.txt", "wb")
+          def rd(t):
+              global buf
+              end = time.time() + t
+              while time.time() < end:
+                  try:
+                      d = s.recv(65536)
+                      if d: buf += d; log.write(d); log.flush()
+                  except socket.timeout: pass
+          def expect(pat, timeout):
+              global buf
+              end = time.time() + timeout
+              while time.time() < end:
+                  m = re.search(pat, buf)
+                  if m: buf = buf[m.end():]; return True
+                  rd(1)
+              return False
+          def send(x): s.sendall(x.encode() + b"\n")
+          # Grub-less: kernel boots from ISO menu; press Enter on boot menu via monitor is done outside
+          ok = expect(rb"login: ", 420)
+          print("login prompt:", ok)
+          send("eos"); print("password prompt:", expect(rb"Password: ", 30))
+          send("live"); rd(8)
+          send("sudo -i"); rd(5)
+          send("export TERM=dumb; stty cols 250; PS1='# '"); rd(2)
+          rd(45)  # let the desktop session settle
+          cmds = [
+            "uptime; free -m",
+            "systemctl --failed --no-pager",
+            "systemctl status sddm --no-pager -l | tail -30",
+            "loginctl list-sessions --no-pager",
+            "ps -eo pid,user,etime,pcpu,pmem,comm,args | grep -Ei 'sddm|Xorg|kwin|plasma|ksplash|startplasma|kded|plymouth|eos-' | grep -v grep",
+            "ls -la /tmp/.X11-unix /var/log | head -50",
+            "cat /etc/sddm.conf; ls /etc/sddm.conf.d",
+            "journalctl -b -u sddm --no-pager | tail -60",
+            "tail -80 /home/eos/.local/share/sddm/xorg-session.log",
+            "tail -80 /home/eos/.xsession-errors",
+            "grep -E '\\(EE\\)|\\(WW\\)' /var/log/Xorg.0.log | tail -30",
+            "journalctl -b --no-pager -p warning | tail -100",
+            "journalctl -b --no-pager | grep -Ei 'plasma|kwin|startplasma|segfault|crash|dumped|signal|abort' | tail -60",
+            "coredumpctl list --no-pager | tail -15",
+            "dmesg | grep -Ei 'segfault|oom|killed|trap' | tail -20",
+            "ls -la /home/eos /home/eos/.config /home/eos/.config/autostart 2>&1 | head -60",
+          ]
+          for i, c in enumerate(cmds):
+              send("echo '#### CMD: " + c.replace("'", "") + "'; " + c + "; echo @@D$((100+%d))@@" % i)
+              print(i, expect(("@@D%d@@" % (100 + i)).encode(), 60))
+          send("echo ALLDONE")
+          rd(3)
+          PY
+          timeout 900 python3 /tmp/drive.py | tee /tmp/l/driver.txt || true
+          echo "screendump /tmp/final.ppm" | socat - UNIX-CONNECT:/tmp/mon; sleep 1
+          convert /tmp/final.ppm /tmp/l/final.png || true
+          echo quit | socat - UNIX-CONNECT:/tmp/mon || true
+
+      - name: Publish logs to branch debug-logs
+        if: always()
+        run: |
+          cd /tmp/l && git init -q && git checkout -q -b debug-logs && git add . \
+            && git -c user.name=ci -c user.email=ci@local commit -qm "debug log" \
+            && git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" debug-logs
