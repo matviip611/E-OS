@@ -6,7 +6,7 @@
 **E-OS by PME** — лише `amd64`, Debian bookworm, KDE Plasma + SDDM.
 
 ## Збірка
-- GitHub Actions: вкладка *Actions → build-iso → Run workflow*, ISO з'явиться в артефактах.
+- GitHub Actions: вкладка *Actions → join-iso → Run workflow*, ISO з'явиться в артефактах.
 - Локально (Debian/Ubuntu, root): `bash ./build.sh` → `E-OS-amd64.iso`
 
 ## Вхід у live-сесію
