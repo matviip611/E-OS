@@ -85,8 +85,6 @@ jobs:
             sleep 40; shot $NAME $NAME-t40
             sleep 60; shot $NAME $NAME-t100
             sleep 60; shot $NAME $NAME-t160
-            sleep 60; shot $NAME $NAME-t220
-            sleep 60; shot $NAME $NAME-t280
             echo "quit" | socat - UNIX-CONNECT:/tmp/mon-$NAME >/dev/null || true
             sleep 3
           }
