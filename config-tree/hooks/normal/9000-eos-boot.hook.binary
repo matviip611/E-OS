@@ -1,0 +1,17 @@
+#!/bin/bash
+# E-OS: брендинг екрана вибору завантаження (BIOS isolinux + UEFI grub). Не валить збірку при помилці.
+echo "E-OS boot branding: start (cwd=$(pwd))"
+B=""; for d in binary ../binary .; do [ -d "$d/isolinux" ] && B="$d" && break; done
+S=""; for d in ../assets ../../assets assets /work/assets; do [ -f "$d/make_boot_splash.py" ] && S="$d/make_boot_splash.py" && break; done
+echo "E-OS boot branding: binary=$B splash-script=$S"
+[ -n "$B" ] && [ -n "$S" ] || { echo "E-OS boot branding: SKIPPED"; exit 0; }
+[ -f "$B/isolinux/splash.png" ]       && python3 "$S" "$B/isolinux/splash.png" 640 480
+[ -f "$B/isolinux/splash800x600.png" ] && python3 "$S" "$B/isolinux/splash800x600.png" 800 600
+[ -f "$B/boot/grub/splash.png" ]      && python3 "$S" "$B/boot/grub/splash.png" 640 480
+sed -i 's/76a1d0ff/55af57ff/g' "$B/isolinux/stdmenu.cfg" 2>/dev/null
+sed -i 's/^menu title .*/menu title E-OS (PME)/' "$B/isolinux/menu.cfg" 2>/dev/null
+for f in "$B/isolinux/live.cfg" "$B/boot/grub/grub.cfg"; do
+  [ -f "$f" ] && sed -i 's/Live system (amd64 fail-safe mode)/E-OS Live (fail-safe mode)/; s/Live system (amd64)/E-OS Live (amd64)/; s/Debian GNU\/Linux/E-OS (PME)/g' "$f"
+done
+echo "E-OS boot branding: done"
+exit 0

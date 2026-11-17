@@ -9,7 +9,7 @@ if [ "$(id -u)" -ne 0 ]; then exec sudo -E bash "$0" "$@"; fi
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y live-build debootstrap squashfs-tools xorriso mtools dosfstools \
-  syslinux syslinux-common syslinux-utils isolinux rsync cpio zstd grub-pc-bin grub-efi-amd64-bin python3 python3-pil ca-certificates
+  syslinux syslinux-common syslinux-utils isolinux rsync cpio zstd grub-pc-bin grub-efi-amd64-bin python3 python3-pil fonts-dejavu-core ca-certificates
 
 # --- 1. розкласти ресурси з assets/ у дерево системи
 INC="config-tree/includes.chroot"
@@ -46,18 +46,7 @@ cp -a "$ROOT"/config-tree/hooks/normal/.  config/hooks/normal/
 cp -a "$ROOT"/config-tree/includes.chroot/. config/includes.chroot/
 chmod +x config/hooks/normal/* config/includes.chroot/usr/local/bin/* 2>/dev/null || true
 
-# --- 3. екран вибору завантаження (ISO) — брендинг, якщо шаблони є
-if [ -d /usr/share/live/build/bootloaders ]; then
-  cp -a /usr/share/live/build/bootloaders config/bootloaders
-  python3 - <<'PY'
-from PIL import Image
-import glob
-src=Image.open('../assets/wallpaper.jpg').convert('RGB')
-for f in glob.glob('config/bootloaders/**/splash.png',recursive=True):
-    w,h=Image.open(f).size; src.resize((w,h)).save(f)
-PY
-  find config/bootloaders -type f \( -name '*.cfg' -o -name '*.txt' -o -name '*.in' \) -print0 2>/dev/null | xargs -0 -r sed -i 's/Debian GNU\/Linux/E-OS (PME)/g; s/Debian/E-OS/g' || true
-fi
+# --- 3. брендинг екрана завантаження робить хук config-tree/hooks/normal/9000-eos-boot.hook.binary
 
 # --- 4. збірка
 lb build

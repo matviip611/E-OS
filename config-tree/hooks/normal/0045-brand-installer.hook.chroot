@@ -1,0 +1,8 @@
+#!/bin/bash
+# Calamares / ярлик встановлення: E-OS замість Debian
+f=/usr/share/applications/install-debian.desktop
+[ -f "$f" ] && sed -i 's/^Name=Install Debian/Name=Install E-OS/; s/^Name\[uk\]=.*/Name[uk]=Встановити E-OS/; s/Installer for Debian Live/Installer for E-OS Live/' "$f"
+for d in /etc/calamares/branding/*/branding.desc; do
+  [ -f "$d" ] && sed -i 's/^\(\s*productName:\s*\).*/\1E-OS/; s/^\(\s*shortProductName:\s*\).*/\1E-OS/; s/^\(\s*versionedName:\s*\).*/\1E-OS 1.0/; s/^\(\s*shortVersionedName:\s*\).*/\1E-OS 1.0/; s/^\(\s*bootloaderEntryName:\s*\).*/\1E-OS/' "$d"
+done
+exit 0

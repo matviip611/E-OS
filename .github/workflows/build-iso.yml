@@ -48,12 +48,15 @@ jobs:
             for pat in usr/local/bin/eos-music usr/local/bin/eos-session-setup usr/share/sddm/themes/eos/Main.qml \
                        usr/share/plymouth/themes/eos/eos.script usr/share/icons/Numix-Circle/index.theme \
                        usr/share/pixmaps/eos-menu.png usr/bin/wine usr/bin/kdeconnect-app usr/bin/gdebi-gtk \
-                       usr/bin/waydroid usr/bin/calamares usr/bin/firefox-esr usr/bin/plasmashell usr/bin/sddm usr/lib/user-setup/user-setup-apply \
+                       usr/bin/waydroid usr/bin/calamares usr/bin/firefox-esr usr/bin/plasmashell usr/bin/sddm usr/lib/user-setup/user-setup-apply usr/bin/chromium usr/share/E-OS/background-music.mp3 \
                        boot/initrd.img boot/vmlinuz etc/os-release; do
               if grep -q "squashfs-root/$pat" /tmp/fs.list; then echo "OK   $pat"; else echo "MISS $pat"; fi
             done
           } | tee /tmp/l/verify.txt
           unsquashfs -cat /tmp/fs.squashfs etc/os-release 2>/dev/null | tee -a /tmp/l/verify.txt
+          echo "--- boot menu entries (isolinux/live.cfg)" | tee -a /tmp/l/verify.txt
+          xorriso -osirrox on -indev E-OS-amd64.iso -extract /isolinux/live.cfg /tmp/live.cfg >/dev/null 2>&1; grep "menu label" /tmp/live.cfg | tee -a /tmp/l/verify.txt
+          grep -a "E-OS boot branding" build.log | tee -a /tmp/l/verify.txt
 
       - name: Boot test in QEMU (screenshots + serial diagnostics)
         continue-on-error: true
