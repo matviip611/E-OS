@@ -49,8 +49,6 @@ chmod +x config/hooks/normal/* config/includes.chroot/usr/local/bin/* 2>/dev/nul
 # --- 3. брендинг екрана завантаження робить хук config-tree/hooks/normal/9000-eos-boot.hook.binary
 
 # --- 4. збірка
-# Сильніше стиснення squashfs (той самий вміст, менший файл): блок 1M + BCJ-фільтр x86, щоб ISO влізло в ліміт 2 GiB одним файлом
-export MKSQUASHFS_OPTIONS="-b 1M -Xbcj x86 -Xdict-size 100%"
 lb build
 ISO="$(ls -1 *.iso | head -n1)"
 mv "$ISO" "$ROOT/E-OS-amd64.iso"
