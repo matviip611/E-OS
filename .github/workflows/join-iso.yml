@@ -1,0 +1,47 @@
+name: join-iso
+# Бере частини ISO з релізу, склеює в один E-OS-amd64.iso і кладе ЛИШЕ в артефакт.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Тег релізу (наприклад build-9). Порожньо = останній реліз"
+        required: false
+        default: ""
+permissions:
+  contents: read
+jobs:
+  join:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Download release parts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p work && cd work
+          if [ -z "$TAG" ]; then TAG=$(gh release list -R "${{ github.repository }}" -L 1 --json tagName -q '.[0].tagName'); fi
+          echo "Release: $TAG"
+          gh release download "$TAG" -R "${{ github.repository }}" --pattern 'E-OS-amd64.iso.part-*' --pattern 'E-OS-amd64.iso.sha256'
+          ls -la
+
+      - name: Join parts into one ISO and verify
+        run: |
+          set -euo pipefail
+          cd work
+          cat E-OS-amd64.iso.part-* > E-OS-amd64.iso
+          rm -f E-OS-amd64.iso.part-*
+          sha256sum -c E-OS-amd64.iso.sha256
+          ls -lh E-OS-amd64.iso
+
+      - name: Upload single ISO as artifact (only)
+        uses: actions/upload-artifact@v4
+        with:
+          name: E-OS-amd64-iso
+          path: |
+            work/E-OS-amd64.iso
+            work/E-OS-amd64.iso.sha256
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
