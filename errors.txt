@@ -1,0 +1,27 @@
+1:Unable to find image 'debian:bookworm' locally
+940:P: If the following stage fails, the most likely cause of the problem is with your mirror configuration or a caching proxy.
+1092:I: Retrieving libgpg-error0 1.46-1
+1093:I: Validating libgpg-error0 1.46-1
+1268:P: If the following stage fails, the most likely cause of the problem is with your mirror configuration or a caching proxy.
+1348:I: Validating libgpg-error0 1.46-1
+1479:I: Extracting libgpg-error0...
+1569:I: Unpacking libgpg-error0:amd64...
+1646:I: Configuring libgpg-error0:amd64...
+4380:cat: '/sys/bus/usb/devices/*:*/bInterfaceClass': No such file or directory
+4381:cat: '/sys/bus/usb/devices/*:*/bInterfaceSubClass': No such file or directory
+4382:cat: '/sys/bus/usb/devices/*:*/bInterfaceProtocol': No such file or directory
+7244:ls: cannot access '/boot/initrd.img-*': No such file or directory
+7245:raspi-firmware: no initrd found in /boot/initrd.img-*, cannot populate /boot/firmware
+7358:cat: '/sys/bus/usb/devices/*:*/bInterfaceClass': No such file or directory
+7359:cat: '/sys/bus/usb/devices/*:*/bInterfaceSubClass': No such file or directory
+7360:cat: '/sys/bus/usb/devices/*:*/bInterfaceProtocol': No such file or directory
+7924:[0;1;31mFailed to connect to bus: Host is down[0m
+8723:Failed to open connection to "system" message bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+9515:  libgmp10:i386 libgnutls30:i386 libgpg-error0:i386 libgphoto2-6:i386
+9542:  libgpg-error-l10n:i386 libgphoto2-l10n:i386 gstreamer1.0-plugins-base:i386
+9557:  libgmp10:i386 libgnutls30:i386 libgpg-error0:i386 libgphoto2-6:i386
+9633:Get:56 http://deb.debian.org/debian bookworm/main i386 libgpg-error0 i386 1.46-1 [81.7 kB]
+9831:Selecting previously unselected package libgpg-error0:i386.
+9832:Preparing to unpack .../048-libgpg-error0_1.46-1_i386.deb ...
+9833:Unpacking libgpg-error0:i386 (1.46-1) ...
+10037:Setting up libgpg-error0:i386 (1.46-1) ...

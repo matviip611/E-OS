@@ -1,0 +1,36 @@
+squashfs entries: 157897
+OK   usr/local/bin/eos-music
+OK   usr/local/bin/eos-session-setup
+OK   usr/share/sddm/themes/eos/Main.qml
+OK   usr/share/plymouth/themes/eos/eos.script
+OK   usr/share/icons/Numix-Circle/index.theme
+OK   usr/share/pixmaps/eos-menu.png
+OK   usr/bin/wine
+OK   usr/bin/kdeconnect-app
+OK   usr/bin/gdebi-gtk
+OK   usr/bin/waydroid
+OK   usr/bin/calamares
+OK   usr/bin/firefox-esr
+OK   usr/bin/plasmashell
+OK   usr/bin/sddm
+OK   usr/lib/user-setup/user-setup-apply
+OK   usr/bin/chromium
+OK   usr/share/E-OS/background-music.mp3
+OK   boot/initrd.img
+OK   boot/vmlinuz
+OK   etc/os-release
+PRETTY_NAME="E-OS (PME)"
+NAME="E-OS"
+VERSION="1.0"
+VERSION_ID="1.0"
+ID=eos
+ID_LIKE=debian
+HOME_URL="https://github.com/matviip611/E-OS"
+VARIANT="PME edition"
+VENDOR_NAME="PME"
+--- boot menu entries (isolinux/live.cfg)
+	menu label ^E-OS Live (amd64)
+	menu label E-OS Live (fail-safe mode)
+E-OS boot branding: start (cwd=/work/build/binary)
+E-OS boot branding: binary=../binary splash-script=../../assets/make_boot_splash.py
+E-OS boot branding: done
