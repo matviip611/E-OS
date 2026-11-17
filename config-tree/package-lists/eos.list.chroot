@@ -1,4 +1,4 @@
-linux-image-amd64 initramfs-tools live-boot live-config live-config-systemd systemd-sysv
+linux-image-amd64 initramfs-tools live-boot live-config live-config-systemd user-setup systemd-sysv
 firmware-linux-free firmware-misc-nonfree amd64-microcode intel-microcode
 xorg xserver-xorg-video-all xserver-xorg-input-libinput
 plasma-desktop kwin-x11 sddm plasma-nm plasma-pa powerdevil kscreen breeze systemsettings dolphin konsole

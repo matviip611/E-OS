@@ -48,7 +48,7 @@ jobs:
             for pat in usr/local/bin/eos-music usr/local/bin/eos-session-setup usr/share/sddm/themes/eos/Main.qml \
                        usr/share/plymouth/themes/eos/eos.script usr/share/icons/Numix-Circle/index.theme \
                        usr/share/pixmaps/eos-menu.png usr/bin/wine usr/bin/kdeconnect-app usr/bin/gdebi-gtk \
-                       usr/bin/waydroid usr/bin/calamares usr/bin/firefox-esr usr/bin/plasmashell usr/bin/sddm \
+                       usr/bin/waydroid usr/bin/calamares usr/bin/firefox-esr usr/bin/plasmashell usr/bin/sddm usr/lib/user-setup/user-setup-apply \
                        boot/initrd.img boot/vmlinuz etc/os-release; do
               if grep -q "squashfs-root/$pat" /tmp/fs.list; then echo "OK   $pat"; else echo "MISS $pat"; fi
             done
